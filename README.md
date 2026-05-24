@@ -8,7 +8,10 @@ Necessario criar e rodar um ambiente virtual
  - python -m venv venv
 
 Acessar ambiente
- - venv\Scripts\activate
+. Windows:
+   - venv\Scripts\activate
+.Mac: 
+ - source venv/bin/activate
 
 Instalação de bibliotecas necessárias no ambiente virtual
  -  pip install pandas openpyxl matplotlib

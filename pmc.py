@@ -6,20 +6,11 @@ import matplotlib.pyplot as plt
 from math import sqrt
 from classificar import validar
 
-# NOTA: O arquivo resultados.xlsx agora é manipulado diretamente via Pandas abaixo,
-# dispensando a necessidade de atualizar o módulo externo resultados.py.
-# import classificar
-# import metricas
-
 LOCAL_PATH = os.path.join(os.getcwd(), './datasets/treinamento.xlsx')
 RESULTADOS_PATH = os.path.join(os.getcwd(), './datasets/resultados.xlsx')
 
-df_treinamento = pd.read_excel(LOCAL_PATH)
-# DESCOMENTADO: Carrega a planilha de resultados globalmente antes do loop
-df_resultados = pd.read_excel(RESULTADOS_PATH)
-
 # ==========================================
-# FUNÇÕES DE ATIVAÇÃO
+# 1. FUNÇÕES DE ATIVAÇÃO
 # ==========================================
 def sigmoid(u):
     if u > 500: return 1.0
@@ -30,126 +21,140 @@ def derivada_sigmoid(y):
     return y * (1.0 - y)
 
 # ==========================================
-# EXTRAÇÃO DE DADOS (Otimização de Velocidade)
+# 2. LEITURA DE DADOS
 # ==========================================
-df_treinamento['x1'] = df_treinamento['x1'].astype(str).str.replace('_x000d_', '').astype(float)
-df_treinamento['x2'] = df_treinamento['x2'].astype(str).str.replace('_x000d_', '').astype(float)
-df_treinamento['x3'] = df_treinamento['x3'].astype(str).str.replace('_x000d_', '').astype(float)
-df_treinamento['d'] = df_treinamento['d'].astype(str).str.replace('_x000d_', '').astype(float)
+df_treinamento = pd.read_excel(LOCAL_PATH)
+df_resultados = pd.read_excel(RESULTADOS_PATH)
 
-x1_list = df_treinamento['x1'].tolist()
-x2_list = df_treinamento['x2'].tolist()
-x3_list = df_treinamento['x3'].tolist()
-d_list = df_treinamento['d'].tolist()
+# Limpa cabeçalhos ocultos para evitar erros de leitura
+df_treinamento.columns = df_treinamento.columns.str.strip().str.replace('_x000d_', '')
 
-X_treino = []
-for i in range(len(x1_list)):
-    X_treino.append([x1_list[i], x2_list[i], x3_list[i]])
+colunas_x = ['x1', 'x2', 'x3', 'x4']
+colunas_d = ['d1', 'd2', 'd3']
+
+# Converte os dados para float
+for col in colunas_x + colunas_d:
+    df_treinamento[col] = df_treinamento[col].astype(str).str.replace('_x000d_', '').astype(float)
+
+X_treino = df_treinamento[colunas_x].values.tolist()
+D_treino = df_treinamento[colunas_d].values.tolist()
 
 # ==========================================
-# PARÂMETROS DO PMC 
+# 3. PARÂMETROS DO PROJETO (PP04)
 # ==========================================
 taxaDeAprendizagem = 0.1
 precisao = 1e-6
-n_escondidos = 10
-n_entradas = 3
+n_entradas = 4
+n_escondidos = 15
+n_saidas = 3
 
-treinamento = 1
-
-# LÓGICA DE LIMPEZA: Identifica e limpa os dados antigos antes de iniciar os treinamentos
 col_mse = 'erro-quadratico-medio'
 col_epocas = 'Numero-de-epocas'
 
 df_resultados[col_mse] = None
 df_resultados[col_epocas] = None
 
-while treinamento <= 5:
+# ==========================================
+# 4. LAÇO PRINCIPAL DOS 5 TREINAMENTOS
+# ==========================================
+for treinamento in range(1, 6):
+    print(f"\n--- A iniciar Treinamento {treinamento} ---")
+    
     epocas = 0
     rmse_por_epoca = []
     mse_anterior = float('inf')
 
-    # INICIALIZAÇÃO DE PESOS (0 a 1)
-    W1 = [[random.uniform(0, 1) for _ in range(n_entradas + 1)] for _ in range(n_escondidos)]
-    W2 = [random.uniform(0, 1) for _ in range(n_escondidos + 1)]
+    # Inicialização entre -0.5 e 0.5
+    W1 = [[random.uniform(-0.5, 0.5) for _ in range(n_entradas + 1)] for _ in range(n_escondidos)]
+    W2 = [[random.uniform(-0.5, 0.5) for _ in range(n_escondidos + 1)] for _ in range(n_saidas)]
 
-    while epocas < 1000:
+    while epocas < 10000:
         epocas += 1
         soma_erro_quadratico = 0
 
-        for i in range(len(X_treino)):
+        # Embaralha a ordem de leitura para evitar ciclos viciosos (Stochastic Gradient Descent)
+        indices = list(range(len(X_treino)))
+        random.shuffle(indices)
+
+        for i in indices:
             x_atual = [1.0] + X_treino[i]
-            d = d_list[i]
+            d_atual = D_treino[i]
             
-            # Forward
+            # --- FORWARD ---
             y_oculta = [1.0]
             for j in range(n_escondidos):
                 u_j = sum(w * x for w, x in zip(W1[j], x_atual))
                 y_oculta.append(sigmoid(u_j))
                 
-            u_saida = sum(w * y for w, y in zip(W2, y_oculta))
-            y_final = sigmoid(u_saida)
+            y_final = []
+            for k in range(n_saidas):
+                u_k = sum(w * y for w, y in zip(W2[k], y_oculta))
+                y_final.append(sigmoid(u_k))
             
-            # Backward
-            erro = d - y_final
-            soma_erro_quadratico += (erro ** 2)
-            
-            delta_saida = erro * derivada_sigmoid(y_final)
+            # --- BACKWARD ---
+            deltas_saida = []
+            for k in range(n_saidas):
+                erro_k = d_atual[k] - y_final[k]
+                
+                # O multiplicador 0.5 pertence à fórmula do erro
+                soma_erro_quadratico += 0.5 * (erro_k ** 2) 
+                deltas_saida.append(erro_k * derivada_sigmoid(y_final[k]))
             
             delta_oculta = []
             for j in range(n_escondidos):
-                soma_deltas = delta_saida * W2[j + 1]
-                delta_j = soma_deltas * derivada_sigmoid(y_oculta[j + 1])
-                delta_oculta.append(delta_j)
+                soma_deltas = sum(deltas_saida[k] * W2[k][j + 1] for k in range(n_saidas))
+                delta_oculta.append(soma_deltas * derivada_sigmoid(y_oculta[j + 1]))
                 
-            for j in range(len(W2)):
-                W2[j] = W2[j] + taxaDeAprendizagem * delta_saida * y_oculta[j]
+            # --- ATUALIZAÇÃO DOS PESOS ---
+            for k in range(n_saidas):
+                for j in range(len(y_oculta)):
+                    W2[k][j] += taxaDeAprendizagem * deltas_saida[k] * y_oculta[j]
                 
             for j in range(n_escondidos):
-                for k in range(len(x_atual)):
-                    W1[j][k] = W1[j][k] + taxaDeAprendizagem * delta_oculta[j] * x_atual[k]
+                for m in range(len(x_atual)):
+                    W1[j][m] += taxaDeAprendizagem * delta_oculta[j] * x_atual[m]
 
+        # --- AVALIAÇÃO DO CRITÉRIO DE PARADA ---
         mse_atual = soma_erro_quadratico / len(X_treino)
-        rmse_epoca = sqrt(mse_atual)
-        rmse_por_epoca.append(rmse_epoca)
+        rmse_por_epoca.append(sqrt(mse_atual))
 
         if abs(mse_atual - mse_anterior) <= precisao:
-            break
+            break  # Interrompe o ciclo 'while' se a rede estagnar
             
         mse_anterior = mse_atual
 
+    print(f"Treinamento concluído em {epocas} épocas. Erro Final: {mse_atual:.6f}")
+
     # ==========================================
-    # SALVAR RESULTADOS NA PLANILHA DE TREINAMENTO
+    # 5. SALVAR DADOS E PÓS-PROCESSAMENTO
     # ==========================================
     for index, row in df_treinamento.iterrows():
-        x_atual = [1.0, row['x1'], row['x2'], row['x3']]
+        x_atual = [1.0, row['x1'], row['x2'], row['x3'], row['x4']]
         
         y_oculta = [1.0]
         for j in range(n_escondidos):
             u_j = sum(w * x for w, x in zip(W1[j], x_atual))
             y_oculta.append(sigmoid(u_j))
             
-        u_saida = sum(w * y for w, y in zip(W2, y_oculta))
-        y_final = sigmoid(u_saida)
-        
-        df_treinamento.at[index, f'Y_{treinamento}'] = y_final
-        
-    df_treinamento.to_excel(LOCAL_PATH, index=False)
-    print(f'Treinamento {treinamento} concluído em {epocas} épocas. Erro Final: {mse_atual:.6f}')
+        for k in range(n_saidas):
+            u_k = sum(w * y for w, y in zip(W2[k], y_oculta))
+            y_calc = sigmoid(u_k)
+            
+            # Filtro Binário: se >= 0.5 regista 1, senão regista 0
+            y_binario = 1 if y_calc >= 0.5 else 0
+            
+            df_treinamento.at[index, f'Y{k+1}_T{treinamento}'] = y_binario
 
-    # ==========================================
-    # LÓGICA ADICIONADA: SALVAR NA PLANILHA DE RESULTADOS (TABELA 1)
-    # ==========================================
-    # Mapeia a linha correspondente ao índice (T1 -> linha 0, T2 -> linha 1...)
+    df_treinamento.to_excel(LOCAL_PATH, index=False)
+
+    # Regista os dados na Tabela 1
     idx_linha = treinamento - 1
     df_resultados.at[idx_linha, col_mse] = mse_atual
     df_resultados.at[idx_linha, col_epocas] = epocas
-    
-    # Grava fisicamente as atualizações no arquivo resultados.xlsx
     df_resultados.to_excel(RESULTADOS_PATH, index=False)
-    # ==========================================
 
-    # Gráfico de Evolução do Erro
-    plt.figure(figsize=(10, 6))
+    # Cria a curva de erro
+    plt.figure(figsize=(8, 5))
     plt.plot(range(1, len(rmse_por_epoca)+1), rmse_por_epoca)
     plt.title(f'Curva de Aprendizado PMC - Treinamento {treinamento}')
     plt.xlabel('Épocas')
@@ -159,12 +164,10 @@ while treinamento <= 5:
     grafico_dir = './graphics/Evolucao_do_erro/'
     if not os.path.exists(grafico_dir):
         os.makedirs(grafico_dir)
-        
     plt.savefig(f'{grafico_dir}treinamento_pmc_{treinamento}.png')
     plt.close()
 
-    if epocas < 1000:
-     validar(W1, W2, treinamento)    
-            
-    treinamento += 1
+    # Chama o classificar.py para prever a folha de cálculo de validação
+    validar(W1, W2, treinamento)
 
+print("\nProcesso Finalizado com Sucesso!")
