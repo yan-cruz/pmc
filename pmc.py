@@ -5,6 +5,7 @@ import math
 import matplotlib.pyplot as plt
 from math import sqrt
 from classificar import validar
+from metricas import calcular
 
 LOCAL_PATH = os.path.join(os.getcwd(), './datasets/treinamento.xlsx')
 RESULTADOS_PATH = os.path.join(os.getcwd(), './datasets/resultados.xlsx')
@@ -169,5 +170,13 @@ for treinamento in range(1, 6):
 
     # Chama o classificar.py para prever a folha de cálculo de validação
     validar(W1, W2, treinamento)
+
+# ==========================================
+# 6. GERAR MATRIZES E MÉTRICAS FINAIS
+# ==========================================
+print("\nA calcular as métricas e a gerar as Matrizes de Confusão...")
+calcular() # <--- ADICIONE ESTA LINHA AQUI
+
+print("\nProcesso Finalizado com Sucesso!")
 
 print("\nProcesso Finalizado com Sucesso!")
