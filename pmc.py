@@ -1,182 +1,130 @@
-import pandas as pd
-import random
 import os
+import random
 import math
+import pandas as pd
 import matplotlib.pyplot as plt
-from math import sqrt
-from classificar import validar
-from metricas import calcular
 
-LOCAL_PATH = os.path.join(os.getcwd(), './datasets/treinamento.xlsx')
-RESULTADOS_PATH = os.path.join(os.getcwd(), './datasets/resultados.xlsx')
+import resultados
+import classificar
+import metricas
 
-# ==========================================
-# 1. FUNÇÕES DE ATIVAÇÃO
-# ==========================================
+TREINAMENTO_PATH = os.path.join(os.getcwd(), 'datasets', 'treinamento.xlsx')
+GRAFICOS_ERRO_PATH = os.path.join(os.getcwd(), 'graphics', 'Evolucao_do_erro')
+
+ETA = 0.1
+EPSILON = 1e-6
+MAX_EPOCAS = 50000
+N_ENTRADAS = 3
+N_ESCONDIDOS = 10
+
+
 def sigmoid(u):
     if u > 500: return 1.0
     if u < -500: return 0.0
     return 1.0 / (1.0 + math.exp(-u))
 
+
 def derivada_sigmoid(y):
     return y * (1.0 - y)
 
-# ==========================================
-# 2. LEITURA DE DADOS
-# ==========================================
-df_treinamento = pd.read_excel(LOCAL_PATH)
-df_resultados = pd.read_excel(RESULTADOS_PATH)
 
-# Limpa cabeçalhos ocultos para evitar erros de leitura
-df_treinamento.columns = df_treinamento.columns.str.strip().str.replace('_x000d_', '')
+def forward(W1, W2, x_bias):
+    y_oculta = [1.0]
+    for j in range(N_ESCONDIDOS):
+        u_j = sum(w * x for w, x in zip(W1[j], x_bias))
+        y_oculta.append(sigmoid(u_j))
 
-colunas_x = ['x1', 'x2', 'x3', 'x4']
-colunas_d = ['d1', 'd2', 'd3']
+    u_k = sum(w * y for w, y in zip(W2[0], y_oculta))
+    y_saida = sigmoid(u_k)
 
-# Converte os dados para float
-for col in colunas_x + colunas_d:
-    df_treinamento[col] = df_treinamento[col].astype(str).str.replace('_x000d_', '').astype(float)
+    return y_oculta, y_saida
 
-X_treino = df_treinamento[colunas_x].values.tolist()
-D_treino = df_treinamento[colunas_d].values.tolist()
 
-# ==========================================
-# 3. PARÂMETROS DO PROJETO (PP04)
-# ==========================================
-taxaDeAprendizagem = 0.1
-precisao = 1e-6
-n_entradas = 4
-n_escondidos = 15
-n_saidas = 3
+def calcular_eqm(X, D, W1, W2):
+    total = 0.0
+    for x, d in zip(X, D):
+        _, y = forward(W1, W2, [1.0] + x)
+        total += 0.5 * (d - y) ** 2
+    return total / len(X)
 
-col_mse = 'erro-quadratico-medio'
-col_epocas = 'Numero-de-epocas'
 
-df_resultados[col_mse] = None
-df_resultados[col_epocas] = None
+def plotar_eqm(eqm_por_epoca, treinamento):
+    os.makedirs(GRAFICOS_ERRO_PATH, exist_ok=True)
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(range(1, len(eqm_por_epoca) + 1), eqm_por_epoca, linewidth=1)
+    ax.set_title(f'Evolução do Erro - Treinamento {treinamento}')
+    ax.set_xlabel('Épocas')
+    ax.set_ylabel('Erro Quadrático Médio (EQM)')
+    ax.grid(True)
+    fig.tight_layout()
+    fig.savefig(os.path.join(GRAFICOS_ERRO_PATH, f'treinamento_pmc_{treinamento}.png'))
+    plt.close(fig)
 
-# ==========================================
-# 4. LAÇO PRINCIPAL DOS 5 TREINAMENTOS
-# ==========================================
-for treinamento in range(1, 6):
-    print(f"\n--- A iniciar Treinamento {treinamento} ---")
-    
-    epocas = 0
-    rmse_por_epoca = []
-    mse_anterior = float('inf')
 
-    # Inicialização entre -0.5 e 0.5
-    W1 = [[random.uniform(-0.5, 0.5) for _ in range(n_entradas + 1)] for _ in range(n_escondidos)]
-    W2 = [[random.uniform(-0.5, 0.5) for _ in range(n_escondidos + 1)] for _ in range(n_saidas)]
+def treinar():
+    df = pd.read_excel(TREINAMENTO_PATH)
+    X = df[['x1', 'x2', 'x3']].values.tolist()
+    D = df['d'].tolist()
 
-    while epocas < 10000:
-        epocas += 1
-        soma_erro_quadratico = 0
+    resultados.limpar()
+    classificar.limpar_validacao()
 
-        # Embaralha a ordem de leitura para evitar ciclos viciosos (Stochastic Gradient Descent)
-        indices = list(range(len(X_treino)))
-        random.shuffle(indices)
+    for treinamento in range(1, 6):
+        print(f'\n--- Iniciando Treinamento {treinamento} ---')
 
-        for i in indices:
-            x_atual = [1.0] + X_treino[i]
-            d_atual = D_treino[i]
-            
-            # --- FORWARD ---
-            y_oculta = [1.0]
-            for j in range(n_escondidos):
-                u_j = sum(w * x for w, x in zip(W1[j], x_atual))
-                y_oculta.append(sigmoid(u_j))
-                
-            y_final = []
-            for k in range(n_saidas):
-                u_k = sum(w * y for w, y in zip(W2[k], y_oculta))
-                y_final.append(sigmoid(u_k))
-            
-            # --- BACKWARD ---
-            deltas_saida = []
-            for k in range(n_saidas):
-                erro_k = d_atual[k] - y_final[k]
-                
-                # O multiplicador 0.5 pertence à fórmula do erro
-                soma_erro_quadratico += 0.5 * (erro_k ** 2) 
-                deltas_saida.append(erro_k * derivada_sigmoid(y_final[k]))
-            
-            delta_oculta = []
-            for j in range(n_escondidos):
-                soma_deltas = sum(deltas_saida[k] * W2[k][j + 1] for k in range(n_saidas))
-                delta_oculta.append(soma_deltas * derivada_sigmoid(y_oculta[j + 1]))
-                
-            # --- ATUALIZAÇÃO DOS PESOS ---
-            for k in range(n_saidas):
-                for j in range(len(y_oculta)):
-                    W2[k][j] += taxaDeAprendizagem * deltas_saida[k] * y_oculta[j]
-                
-            for j in range(n_escondidos):
-                for m in range(len(x_atual)):
-                    W1[j][m] += taxaDeAprendizagem * delta_oculta[j] * x_atual[m]
+        # Pesos inicializados entre 0 e 1 conforme roteiro
+        W1 = [[random.uniform(0, 1) for _ in range(N_ENTRADAS + 1)] for _ in range(N_ESCONDIDOS)]
+        W2 = [[random.uniform(0, 1) for _ in range(N_ESCONDIDOS + 1)]]
 
-        # --- AVALIAÇÃO DO CRITÉRIO DE PARADA ---
-        mse_atual = soma_erro_quadratico / len(X_treino)
-        rmse_por_epoca.append(sqrt(mse_atual))
+        eqm_anterior = float('inf')
+        eqm_por_epoca = []
+        epocas = 0
 
-        if abs(mse_atual - mse_anterior) <= precisao:
-            break  # Interrompe o ciclo 'while' se a rede estagnar
-            
-        mse_anterior = mse_atual
+        for epoca in range(1, MAX_EPOCAS + 1):
+            epocas = epoca
 
-    print(f"Treinamento concluído em {epocas} épocas. Erro Final: {mse_atual:.6f}")
+            indices = list(range(len(X)))
+            random.shuffle(indices)
 
-    # ==========================================
-    # 5. SALVAR DADOS E PÓS-PROCESSAMENTO
-    # ==========================================
-    for index, row in df_treinamento.iterrows():
-        x_atual = [1.0, row['x1'], row['x2'], row['x3'], row['x4']]
-        
-        y_oculta = [1.0]
-        for j in range(n_escondidos):
-            u_j = sum(w * x for w, x in zip(W1[j], x_atual))
-            y_oculta.append(sigmoid(u_j))
-            
-        for k in range(n_saidas):
-            u_k = sum(w * y for w, y in zip(W2[k], y_oculta))
-            y_calc = sigmoid(u_k)
-            
-            # Filtro Binário: se >= 0.5 regista 1, senão regista 0
-            y_binario = 1 if y_calc >= 0.5 else 0
-            
-            df_treinamento.at[index, f'Y{k+1}_T{treinamento}'] = y_binario
+            for i in indices:
+                x_bias = [1.0] + X[i]
+                d_atual = D[i]
 
-    df_treinamento.to_excel(LOCAL_PATH, index=False)
+                y_oculta, y_saida = forward(W1, W2, x_bias)
 
-    # Regista os dados na Tabela 1
-    idx_linha = treinamento - 1
-    df_resultados.at[idx_linha, col_mse] = mse_atual
-    df_resultados.at[idx_linha, col_epocas] = epocas
-    df_resultados.to_excel(RESULTADOS_PATH, index=False)
+                erro = d_atual - y_saida
+                delta_saida = erro * derivada_sigmoid(y_saida)
 
-    # Cria a curva de erro
-    plt.figure(figsize=(8, 5))
-    plt.plot(range(1, len(rmse_por_epoca)+1), rmse_por_epoca)
-    plt.title(f'Curva de Aprendizado PMC - Treinamento {treinamento}')
-    plt.xlabel('Épocas')
-    plt.ylabel('RMSE')
-    plt.grid(True)
-    
-    grafico_dir = './graphics/Evolucao_do_erro/'
-    if not os.path.exists(grafico_dir):
-        os.makedirs(grafico_dir)
-    plt.savefig(f'{grafico_dir}treinamento_pmc_{treinamento}.png')
-    plt.close()
+                delta_oculta = [
+                    delta_saida * W2[0][j + 1] * derivada_sigmoid(y_oculta[j + 1])
+                    for j in range(N_ESCONDIDOS)
+                ]
 
-    # Chama o classificar.py para prever a folha de cálculo de validação
-    validar(W1, W2, treinamento)
+                for j_idx in range(len(y_oculta)):
+                    W2[0][j_idx] += ETA * delta_saida * y_oculta[j_idx]
 
-# ==========================================
-# 6. GERAR MATRIZES E MÉTRICAS FINAIS
-# ==========================================
-print("\nA calcular as métricas e a gerar as Matrizes de Confusão...")
-calcular() # <--- ADICIONE ESTA LINHA AQUI
+                for j in range(N_ESCONDIDOS):
+                    for m in range(len(x_bias)):
+                        W1[j][m] += ETA * delta_oculta[j] * x_bias[m]
 
-print("\nProcesso Finalizado com Sucesso!")
+            eqm_atual = calcular_eqm(X, D, W1, W2)
+            eqm_por_epoca.append(eqm_atual)
 
-print("\nProcesso Finalizado com Sucesso!")
+            if abs(eqm_atual - eqm_anterior) <= EPSILON:
+                break
+
+            eqm_anterior = eqm_atual
+
+        print(f'Treinamento {treinamento} concluído em {epocas} épocas. EQM: {eqm_atual:.8f}')
+
+        resultados.preencher(treinamento, eqm_atual, epocas)
+        plotar_eqm(eqm_por_epoca, treinamento)
+        classificar.validar(W1, W2, treinamento)
+
+    print('\nGerando gráficos de validação e métricas...')
+    metricas.calcular()
+    print('\nProcesso finalizado com sucesso!')
+
+
+if __name__ == '__main__':
+    treinar()

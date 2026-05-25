@@ -1,23 +1,55 @@
-Bibliotecas que precisam ser instaladas:
-  - pandas
-  - openpyxl
-  - matplotlib
+## Requisitos
 
+```
+pandas
+openpyxl
+matplotlib
+numpy
+xlrd
+```
 
-Necessario criar e rodar um ambiente virtual
- - python -m venv venv
+## Como rodar
 
-Acessar ambiente
-. Windows:
-   - venv\Scripts\activate
-.Mac: 
- - source venv/bin/activate
+### 1. Criar e ativar ambiente virtual
 
-Instalação de bibliotecas necessárias no ambiente virtual
- -  pip install pandas openpyxl matplotlib
- -  pip install -U scikit-learn
+Windows:
+```
+py -m venv venv
+venv\Scripts\activate
+```
 
-Rodar Projeto
-  - python pmc.py
+Mac/Linux:
+```
+python3 -m venv venv
+source venv/bin/activate
+```
 
-grafico de curva de apredizado
+### 2. Instalar dependências
+
+```
+pip install pandas openpyxl matplotlib numpy xlrd
+```
+
+### 3. Preparar planilhas (apenas na primeira vez)
+
+Coloque os arquivos `PP03_dados-treinamento.xls` e `PP03_dados-validacao.xls` na pasta Downloads e execute:
+
+```
+py preparar_planilhas.py
+```
+
+### 4. Treinar as redes
+
+```
+py pmc.py
+```
+
+## Arquivos gerados
+
+| Arquivo | Conteúdo |
+|---|---|
+| `datasets/resultados.xlsx` | Tabela 1 — EQM e épocas dos 5 treinamentos |
+| `datasets/validacao.xlsx` | Tabela 2 — saídas y(T1)…y(T5) para as 20 amostras de validação |
+| `datasets/metricas.xlsx` | Erro relativo médio (%) e Variância (%) por rede |
+| `graphics/Evolucao_do_erro/` | 5 gráficos de EQM por época |
+| `graphics/validacao/` | 5 gráficos de saída desejada vs. saída da rede |
