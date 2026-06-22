@@ -1,0 +1,36 @@
+\setlrmarginsandblock{3cm}{2cm}{*}
+\setulmarginsandblock{3cm}{2cm}{*}
+\checkandfixthelayout
+
+\setlength{\parindent}{1.3cm}
+
+\setlength{\parskip}{0.2cm} 
+
+
+\makeatletter
+\let\@fnsymbol\@arabic
+\makeatother	
+
+\makeatletter
+
+\def\@maketitle{	
+	\begin{center}
+ \textbf{OPTATIVA III REDES NEURAIS ARTIFICIAIS - 7\textsuperscript{o} PERÍODO - ENG. COMP} \\
+Universidade do Estado de Minas Gerais - UEMG
+\vskip 2em
+    {\Large \@title  \par \textbf{\textit{\imprimirtituloestrangeiro}} }
+		\vskip 3em
+		{\normalsize \flushright
+			\lineskip .5em
+			\begin{tabular}[t]{c}
+				\@author
+			\end{tabular}\par}
+		\vskip 1em
+ \eixo
+	\end{center}
+	\vskip 1.5em}
+\makeatother
+
+
+
+

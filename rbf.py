@@ -42,9 +42,10 @@ MAX_EPOCAS = 100_000
 K          = 2
 N_REDES    = 5
 
-DATASETS_PATH = os.path.join(os.getcwd(), 'datasets')
-EVOLUCAO_PATH = os.path.join(os.getcwd(), 'graphics', 'Evolucao_do_erro')
-MATRIZES_PATH = os.path.join(os.getcwd(), 'graphics', 'matrizes_de_confusao')
+DATASETS_PATH         = os.path.join(os.getcwd(), 'datasets')
+EVOLUCAO_PATH         = os.path.join(os.getcwd(), 'graphics', 'Evolucao_do_erro')
+MATRIZES_PATH         = os.path.join(os.getcwd(), 'graphics', 'matrizes_de_confusao')
+GRAFICOS_VALIDACAO_PATH = os.path.join(os.getcwd(), 'graphics', 'validacao')
 
 # ============================================================
 # I/O DE PLANILHAS
@@ -106,7 +107,7 @@ def salvar_metricas(resultados):
         linhas.append({
             'Rede':               f"T{r['T']}",
             'Épocas':             r['epocas'],
-            'RMSE Final':         round(r['rmse_final'], 6),
+            'EQM Final':          round(r['eqm_final'], 8),
             'VP':                 r['VP'],
             'VN':                 r['VN'],
             'FP':                 r['FP'],
@@ -123,6 +124,35 @@ def salvar_metricas(resultados):
         os.path.join(DATASETS_PATH, 'rbf_metricas.xlsx'), index=False
     )
     print("  Métricas salvas em datasets/rbf_metricas.xlsx")
+
+
+def salvar_treinamentos(treinamentos):
+    """
+    Salva centros, variâncias e pesos de cada rede em datasets/rbf_treinamentos.xlsx.
+    Cobre os dados das Tabelas 1 e 2 do roteiro para todas as 5 redes.
+    treinamentos: lista de dicts (um por rede).
+    """
+    linhas = []
+    for t in treinamentos:
+        linhas.append({
+            'Rede':                  f"T{t['T']}",
+            'Cluster 1 - Centro x1': round(float(t['c1'][0]), 8),
+            'Cluster 1 - Centro x2': round(float(t['c1'][1]), 8),
+            'Cluster 1 - Variância': round(float(t['v1']), 8),
+            'Cluster 2 - Centro x1': round(float(t['c2'][0]), 8),
+            'Cluster 2 - Centro x2': round(float(t['c2'][1]), 8),
+            'Cluster 2 - Variância': round(float(t['v2']), 8),
+            'W1 (W11^(2))':          round(float(t['W'][0]), 8),
+            'W2 (W21^(2))':          round(float(t['W'][1]), 8),
+            'θ (theta)':             round(float(t['theta']), 8),
+            'Épocas':                t['epocas'],
+            'EQM Final':             round(float(t['eqm_final']), 8),
+        })
+
+    pd.DataFrame(linhas).to_excel(
+        os.path.join(DATASETS_PATH, 'rbf_treinamentos.xlsx'), index=False
+    )
+    print("  Parâmetros de treinamento salvos em datasets/rbf_treinamentos.xlsx")
 
 # ============================================================
 # FUNÇÕES DE ATIVAÇÃO E PROPAGAÇÃO
@@ -178,7 +208,10 @@ def kmeans(X_pos, k=K, max_iter=1000):
 
 
 def calcular_variancias(X_pos, centros, rotulos, k=K):
-    """Variância de cada cluster: distância quadrática média ao centróide."""
+    """
+    Variância de cada cluster pelo critério da distância quadrática média:
+    σ²_j = (1/m^(j)) * Σ_{x^(k)∈Ω^(j)} Σ_i (x_i^(k) - W_ji^(1))²
+    """
     variancias = []
     for i in range(k):
         membros = X_pos[rotulos == i]
@@ -194,12 +227,15 @@ def calcular_variancias(X_pos, centros, rotulos, k=K):
 # ============================================================
 
 def treinar_saida(X_treino, D_treino, centros, variancias):
-    """Treina W e θ via Regra Delta; retorna (W, theta, rmse_por_epoca)."""
+    """
+    Treina W e θ via Regra Delta com critério de parada |EQM_atual - EQM_anterior| < ε.
+    Retorna (W, theta, eqm_por_epoca).
+    """
     W     = np.random.uniform(-0.1, 0.1, K)
     theta = float(np.random.uniform(-0.1, 0.1))
 
-    rmse_por_epoca = []
-    rmse_anterior  = float('inf')
+    eqm_por_epoca = []
+    eqm_anterior  = float('inf')
 
     for epoca in range(MAX_EPOCAS):
         erros_quad = []
@@ -210,17 +246,17 @@ def treinar_saida(X_treino, D_treino, centros, variancias):
             W     += ETA * e * phi
             theta += ETA * e
 
-        rmse = math.sqrt(float(np.mean(erros_quad)))
-        rmse_por_epoca.append(rmse)
+        eqm = float(np.mean(erros_quad))
+        eqm_por_epoca.append(eqm)
 
-        if abs(rmse_anterior - rmse) < EPSILON:
-            print(f"  Convergência atingida na época {epoca + 1}  |  RMSE = {rmse:.2e}")
+        if abs(eqm_anterior - eqm) < EPSILON:
+            print(f"  Convergência atingida na época {epoca + 1}  |  EQM = {eqm:.2e}")
             break
-        rmse_anterior = rmse
+        eqm_anterior = eqm
     else:
-        print(f"  Limite de {MAX_EPOCAS} épocas atingido  |  RMSE = {rmse_por_epoca[-1]:.2e}")
+        print(f"  Limite de {MAX_EPOCAS} épocas atingido  |  EQM = {eqm_por_epoca[-1]:.2e}")
 
-    return W, theta, rmse_por_epoca
+    return W, theta, eqm_por_epoca
 
 # ============================================================
 # MÉTRICAS DE VALIDAÇÃO
@@ -250,23 +286,45 @@ def calcular_metricas(y_pred, y_real):
 # PLOTAGEM
 # ============================================================
 
-def plotar_rmse(rmse_por_epoca, T):
-    """Salva curva RMSE × época em graphics/Evolucao_do_erro/treinamento_rbf_{T}.png."""
+def plotar_eqm(eqm_por_epoca, T):
+    """Salva curva EQM × época em graphics/Evolucao_do_erro/treinamento_rbf_{T}.png."""
     os.makedirs(EVOLUCAO_PATH, exist_ok=True)
-    epocas = list(range(1, len(rmse_por_epoca) + 1))
+    epocas = list(range(1, len(eqm_por_epoca) + 1))
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(epocas, rmse_por_epoca, linewidth=1.2, color='steelblue')
-    ax.set_title(f'Evolução do RMSE — Rede RBF T{T} (Regra Delta)')
+    ax.plot(epocas, eqm_por_epoca, linewidth=1.2, color='steelblue')
+    ax.set_title(f'Evolução do EQM — Rede RBF T{T} (Regra Delta)')
     ax.set_xlabel('Épocas')
-    ax.set_ylabel('RMSE')
+    ax.set_ylabel('Erro Quadrático Médio (EQM)')
     ax.grid(True, alpha=0.4)
     fig.tight_layout()
 
     caminho = os.path.join(EVOLUCAO_PATH, f'treinamento_rbf_{T}.png')
     fig.savefig(caminho, dpi=150)
     plt.close(fig)
-    print(f"  Gráfico RMSE salvo em: {caminho}")
+    print(f"  Gráfico EQM salvo em: {caminho}")
+
+
+def plotar_validacao(X_val, D_val, y_cont, T):
+    """Salva gráfico d vs y (saída contínua) em graphics/validacao/validacao_rbf_T{T}.png."""
+    os.makedirs(GRAFICOS_VALIDACAO_PATH, exist_ok=True)
+    amostras = list(range(1, len(X_val) + 1))
+
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(amostras, D_val, 'b-o', label='Saída desejada (d)', markersize=5, linewidth=1.5)
+    ax.plot(amostras, y_cont, 'r-s', label=f'Saída da rede T{T} (y)', markersize=5, linewidth=1.5)
+    ax.set_title(f'Validação T{T}: Saída Desejada vs. Saída da Rede RBF')
+    ax.set_xlabel('Número da amostra')
+    ax.set_ylabel('Saída')
+    ax.legend()
+    ax.grid(True, alpha=0.4)
+    ax.set_xticks(amostras)
+    fig.tight_layout()
+
+    caminho = os.path.join(GRAFICOS_VALIDACAO_PATH, f'validacao_rbf_T{T}.png')
+    fig.savefig(caminho, dpi=150)
+    plt.close(fig)
+    print(f"  Gráfico de validação salvo em: {caminho}")
 
 
 def plotar_matriz_confusao(m, T):
@@ -325,6 +383,7 @@ def main():
     predicoes_cont = {}
     predicoes_bin  = {}
     resultados     = []
+    treinamentos   = []
 
     # ----------------------------------------------------------
     # LOOP: 5 REDES
@@ -339,24 +398,32 @@ def main():
         centros, rotulos = kmeans(X_pos)
         variancias       = calcular_variancias(X_pos, centros, rotulos)
 
+        print(f"\n  Tabela 1 — Clusters (Rede T{T})")
+        print(f"  {'Cluster':<8} {'Centro x1':>12} {'Centro x2':>12} {'Variância':>12}")
+        print("  " + "-" * 48)
         for i in range(K):
             n_membros = int(np.sum(rotulos == i))
-            print(f"    Cluster {i+1}: c=({centros[i][0]:.6f}, {centros[i][1]:.6f})"
-                  f"  σ²={variancias[i]:.6f}  n={n_membros}")
+            print(f"  {i+1:<8} {centros[i][0]:>12.8f} {centros[i][1]:>12.8f} {variancias[i]:>12.8f}"
+                  f"  (n={n_membros})")
 
         # ---- ESTÁGIO 2 — REGRA DELTA ----
         print(f"\n  [Estágio 2] Regra Delta  eta={ETA}  eps={EPSILON}  max={MAX_EPOCAS}")
-        W, theta, rmse_por_epoca = treinar_saida(X_treino, D_treino, centros, variancias)
+        W, theta, eqm_por_epoca = treinar_saida(X_treino, D_treino, centros, variancias)
 
-        print(f"    W1={W[0]:+.8f}  W2={W[1]:+.8f}  θ={theta:+.8f}")
-        print(f"    Épocas: {len(rmse_por_epoca)}  |  RMSE final: {rmse_por_epoca[-1]:.2e}")
+        print(f"\n  Tabela 2 — Pesos (Rede T{T})")
+        print(f"  {'Parâmetro':<14} {'Valor':>14}")
+        print("  " + "-" * 30)
+        print(f"  {'W1 (W11^(2))':<14} {W[0]:>+14.8f}")
+        print(f"  {'W2 (W21^(2))':<14} {W[1]:>+14.8f}")
+        print(f"  {'theta':<14} {theta:>+14.8f}")
+        print(f"  Épocas: {len(eqm_por_epoca)}  |  EQM final: {eqm_por_epoca[-1]:.2e}")
 
-        # ---- GRÁFICO RMSE ----
-        plotar_rmse(rmse_por_epoca, T)
+        # ---- GRÁFICO EQM ----
+        plotar_eqm(eqm_por_epoca, T)
 
         # ---- VALIDAÇÃO ----
-        print(f"\n  [Validação] Rede T{T}")
-        cab = f"  {'#':<4} {'x1':>8} {'x2':>8} {'d':>5} {'y':>12} {'y_bin':>7}"
+        print(f"\n  Tabela 3 — Validação (Rede T{T})")
+        cab = f"  {'#':<4} {'x1':>8} {'x2':>8} {'d':>5} {'y':>12} {'y_pos':>7}"
         print(cab)
         print("  " + "-" * (len(cab) - 2))
 
@@ -370,8 +437,14 @@ def main():
             acerto = "OK" if y_pos == int(d) else "XX"
             print(f"  {i+1:<4} {x[0]:>8.4f} {x[1]:>8.4f} {int(d):>5} {y:>12.6f} {y_pos:>7}  {acerto}")
 
+        acertos_val = sum(1 for p, r in zip(y_bin, [int(d) for d in D_val]) if p == r)
+        print(f"  Taxa de acertos: {acertos_val}/{len(D_val)} = {acertos_val/len(D_val)*100:.1f}%")
+
         predicoes_cont[T] = y_cont
         predicoes_bin[T]  = y_bin
+
+        # ---- GRÁFICO DE VALIDAÇÃO ----
+        plotar_validacao(X_val, D_val, y_cont, T)
 
         # ---- MÉTRICAS ----
         m = calcular_metricas(y_bin, [int(d) for d in D_val])
@@ -389,10 +462,22 @@ def main():
         plotar_matriz_confusao(m, T)
 
         resultados.append({
-            'T':             T,
-            'epocas':        len(rmse_por_epoca),
-            'rmse_final':    rmse_por_epoca[-1],
+            'T':          T,
+            'epocas':     len(eqm_por_epoca),
+            'eqm_final':  eqm_por_epoca[-1],
             **m,
+        })
+
+        treinamentos.append({
+            'T':        T,
+            'c1':       centros[0],
+            'c2':       centros[1],
+            'v1':       variancias[0],
+            'v2':       variancias[1],
+            'W':        W,
+            'theta':    theta,
+            'epocas':   len(eqm_por_epoca),
+            'eqm_final': eqm_por_epoca[-1],
         })
 
     # ----------------------------------------------------------
@@ -403,16 +488,17 @@ def main():
     print("=" * 62)
     salvar_validacao(X_val, D_val, predicoes_cont, predicoes_bin)
     salvar_metricas(resultados)
+    salvar_treinamentos(treinamentos)
 
     # ---- RESUMO FINAL ----
     print("\n" + "=" * 62)
     print("  RESUMO — 5 REDES")
     print("=" * 62)
-    cab = f"  {'Rede':<6} {'Épocas':>8} {'RMSE':>10} {'Acurácia':>10} {'Precisão':>10}"
+    cab = f"  {'Rede':<6} {'Épocas':>8} {'EQM':>10} {'Acurácia':>10} {'Precisão':>10}"
     print(cab)
     print("  " + "-" * (len(cab) - 2))
     for r in resultados:
-        print(f"  T{r['T']:<5} {r['epocas']:>8} {r['rmse_final']:>10.2e}"
+        print(f"  T{r['T']:<5} {r['epocas']:>8} {r['eqm_final']:>10.2e}"
               f" {r['acuracia']*100:>9.2f}% {r['precisao']*100:>9.2f}%")
     print()
 

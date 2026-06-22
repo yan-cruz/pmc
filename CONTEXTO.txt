@@ -1,0 +1,325 @@
+================================================================================
+  CONTEXTO DO TRABALHO 5 — REDE RBF (Redes Neurais Artificiais — UEMG)
+  Gerado em: 22/06/2026
+  Alunos: Ítalo Vinícius de Bessa (1699833) e Yan Gabriel Ferreira da Cruz (1699690)
+================================================================================
+
+LEIA ESTE ARQUIVO INTEIRO ANTES DE FAZER QUALQUER COISA.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. SITUAÇÃO ATUAL — O QUE JÁ FOI FEITO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+O trabalho está COMPLETO em termos de código e relatório. O que resta é apenas
+compilar o PDF a partir do arquivo LaTeX (instruções na seção 7).
+
+O que foi feito nesta sessão de trabalho:
+
+  [✓] rbf.py revisado e corrigido:
+      - Bug crítico corrigido: o código original usava RMSE (raiz do EQM) como
+        critério de convergência. Os slides do professor usam EQM puro. Foi
+        removido o math.sqrt() e todas as variáveis rmse* renomeadas para eqm*.
+      - Adicionada função plotar_validacao() — gráfico d vs y (saída contínua).
+      - Adicionada função salvar_treinamentos() — salva centros/variâncias/pesos
+        de cada rede em rbf_treinamentos.xlsx (cobre Tabelas 1 e 2 do roteiro).
+      - Corrigido UnicodeEncodeError no Windows (cp1252): o caractere θ foi
+        removido de f-strings de print (mantido apenas no Excel via openpyxl).
+      - Resultado ao rodar: 5 redes convergem em ~346-347 épocas, EQM ≈ 0,237,
+        acurácia 80% em todas (8/10 corretos).
+
+  [✓] relatorio/main.tex criado do zero:
+      - Segue exatamente o modelo do relatório PMC anterior (abntex2).
+      - Cobre todos os 5 itens do roteiro PP05_RBF.pdf.
+      - Imagens referenciadas com caminhos relativos ../graphics/... (compilar
+        de dentro da pasta relatorio/).
+      - NÃO precisa de pasta imagens/ — usa os PNGs já gerados pelo rbf.py.
+
+  [✓] Código foi executado e gerou todos os arquivos de saída (ver seção 4).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. ESTRUTURA DE ARQUIVOS DO PROJETO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Pasta raiz do projeto: trabalho5/pmc/
+(A pasta chama "pmc" mas o método implementado é RBF — isso é legado do colega.)
+
+Arquivos relevantes (ignorar pmc.py, classificar.py, metricas.py, preparar_planilhas.py
+— são de trabalhos anteriores e NÃO são usados pelo RBF):
+
+  rbf.py                              ← ÚNICO arquivo Python do trabalho 5
+  CLAUDE.md                           ← documentação do projeto (abntex2, etc.)
+  CONTEXTO.txt                        ← este arquivo
+
+  datasets/
+    rbf_treinamento.xlsx              ← 40 amostras (x1, x2, d)
+    rbf_validacao.xlsx                ← 10 amostras + y_T1..T5 + ybin_T1..T5
+    rbf_metricas.xlsx                 ← métricas de cada rede (VP, VN, etc.)
+    rbf_treinamentos.xlsx             ← centros, variâncias, pesos de cada rede
+
+  graphics/
+    Evolucao_do_erro/
+      treinamento_rbf_1.png           ← curva EQM × época, T1
+      treinamento_rbf_2.png           ← curva EQM × época, T2
+      treinamento_rbf_3.png           ← curva EQM × época, T3
+      treinamento_rbf_4.png           ← curva EQM × época, T4
+      treinamento_rbf_5.png           ← curva EQM × época, T5
+    matrizes_de_confusao/
+      rede_rbf_T1.png                 ← matriz de confusão, T1
+      rede_rbf_T2.png                 ← matriz de confusão, T2
+      rede_rbf_T3.png                 ← matriz de confusão, T3
+      rede_rbf_T4.png                 ← matriz de confusão, T4
+      rede_rbf_T5.png                 ← matriz de confusão, T5
+    validacao/
+      validacao_rbf_T1.png            ← gráfico d vs y, T1
+      ...validacao_rbf_T5.png
+
+  relatorio/
+    main.tex                          ← RELATÓRIO COMPLETO (compilar aqui)
+    configs/
+      pacotes.tex                     ← pacotes LaTeX (não modificar)
+      forma.tex                       ← layout/margens (não modificar)
+    ref.bib                           ← referências (não usadas no RBF)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. O QUE O ROTEIRO PEDE × O QUE ESTÁ IMPLEMENTADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Roteiro: materiais/PP05_RBF.pdf
+Slides:  materiais/6_RBF.pdf
+
+Item 1 — Tabela 1: Cluster | Centro | Variância
+  → Coberto. Impresso no console e salvo em rbf_treinamentos.xlsx.
+    Apresentado na Seção 2 do relatório.
+
+Item 2 — Tabela 2: W1,1^(2) | W2,1^(2) | θ1
+  → Coberto. Impresso no console e salvo em rbf_treinamentos.xlsx.
+    Apresentado na Seção 3 do relatório.
+
+Item 3 — Gráfico EQM × épocas
+  → Coberto. 5 PNGs em graphics/Evolucao_do_erro/.
+    Apresentado na Seção 4 do relatório.
+
+Item 4 — Tabela 3: Amostra, x1, x2, d, y, y^pos + taxa de acertos
+  → Coberto. Impresso no console e salvo em rbf_validacao.xlsx.
+    Apresentado na Seção 5 do relatório.
+
+Item 5 — Matriz de confusão + Nacertos, Nerros, Acurácia, Sensibilidade,
+          Especificidade, Precisão + estratégias de melhoria
+  → Coberto. 5 PNGs em graphics/matrizes_de_confusao/ + rbf_metricas.xlsx.
+    Apresentado na Seção 6 do relatório, incluindo nota sobre aumentar K.
+
+Item 6 — Relatório
+  → Coberto. relatorio/main.tex completo. Falta apenas compilar para PDF.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. RESULTADOS OBTIDOS (valores reais de uma execução típica)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Os resultados são ESTÁVEIS — todas as 5 redes convergem para a mesma solução.
+
+TABELA 1 — K-Means (mesma para todos os treinamentos):
+  Cluster 1: Centro x1=0,39896923  x2=0,15713077  σ²=0,03845986  (n=13)
+  Cluster 2: Centro x1=0,16483333  x2=0,61211667  σ²=0,02980551  (n=6)
+
+  Nota: K-Means usa SOMENTE amostras com d=+1 (19 de 40 amostras de treinamento).
+
+TABELA 2 — Regra Delta (os W1 e W2 podem estar trocados entre runs —
+dependendo de qual cluster ficou como índice 0 ou 1 — mas o resultado
+classificatório é idêntico):
+  T1: W1=+2,69754641  W2=+2,37765557  θ=−1,00253395  épocas=347  EQM=0,237
+  T2: W1=+2,37756234  W2=+2,69750750  θ=−1,00253594  épocas=347  EQM=0,237
+  T3: W1=+2,69754621  W2=+2,37765522  θ=−1,00255862  épocas=347  EQM=0,237
+  T4: W1=+2,37764719  W2=+2,69754284  θ=−1,00255666  épocas=346  EQM=0,237
+  T5: W1=+2,69754138  W2=+2,37764357  θ=−1,00255578  épocas=346  EQM=0,237
+
+TABELA 3 — Validação (idêntica em todos os treinamentos, valores de T1):
+  Amostra | x1      | x2      | d  | y           | y^pos | OK?
+  1       | 0,8705  | 0,9329  | -1 | -1,002374   | -1    | OK
+  2       | 0,0388  | 0,2703  | +1 | -0,323085   | -1    | XX  ← FN
+  3       | 0,8236  | 0,4458  | -1 | -0,913920   | -1    | OK
+  4       | 0,7075  | 0,1502  | +1 | -0,220010   | -1    | XX  ← FN
+  5       | 0,9587  | 0,8663  | -1 | -1,002447   | -1    | OK
+  6       | 0,6115  | 0,9365  | -1 | -0,987655   | -1    | OK
+  7       | 0,3534  | 0,3646  | +1 |  0,966410   | +1    | OK
+  8       | 0,3268  | 0,2766  | +1 |  1,323102   | +1    | OK
+  9       | 0,6129  | 0,4518  | -1 | -0,468109   | -1    | OK
+  10      | 0,9948  | 0,4962  | -1 | -0,996526   | -1    | OK
+  Taxa de acertos: 8/10 = 80%
+
+MATRIZ DE CONFUSÃO (idêntica nos 5 treinamentos):
+                 Previsto +1   Previsto -1
+  Real +1   |  VP = 2     |  FN = 2     |
+  Real -1   |  FP = 0     |  VN = 6     |
+
+  Nacertos       = 8
+  Nerros         = 2
+  Acurácia       = 80,00%
+  Sensibilidade  = 50,00%   (VP / (VP+FN) = 2/4)
+  Especificidade = 100,00%  (VN / (VN+FP) = 6/6)
+  Precisão       = 100,00%  (VP / (VP+FP) = 2/2)
+
+Os 2 erros são Falsos Negativos: amostras 2 e 4 (d=+1) classificadas como -1.
+Motivo: ambas ficam em regiões com baixa ativação gaussiana em relação aos dois
+clusters encontrados. Estratégia de melhoria: aumentar K (mais neurônios RBF).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. DETALHES TÉCNICOS DA IMPLEMENTAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Hiperparâmetros (definidos no topo de rbf.py):
+  ETA        = 0.01       (taxa de aprendizado — Regra Delta)
+  EPSILON    = 1e-7       (critério de parada: |EQM_atual - EQM_anterior| < ε)
+  MAX_EPOCAS = 100_000    (limite de segurança)
+  K          = 2          (número de clusters / neurônios RBF)
+  N_REDES    = 5          (número de treinamentos independentes)
+
+Arquitetura:
+  Entrada: 2 features (x1, x2)
+  Camada oculta: K=2 neurônios gaussianos
+    φ_i(x) = exp(-||x - c_i||² / (2σ²_i))
+  Saída: 1 neurônio linear
+    y = W·φ + θ
+  Pós-processamento: y ≥ 0 → +1, y < 0 → -1
+
+Estágio 1 — K-Means:
+  - Aplicado SOMENTE às amostras com d=+1 (X_pos = X_treino[D_treino == 1])
+  - Variância por cluster:
+    σ²_j = (1/m^(j)) × Σ_{x^(k)∈Ω^(j)} Σ_i (x_i^(k) - W_ji^(1))²
+    Fórmula exata dos slides do professor (6_RBF.pdf, slide do pseudocódigo)
+
+Estágio 2 — Regra Delta:
+  - Convergência por EQM (não RMSE):
+    eqm = np.mean(erros_quad)   ← SEM math.sqrt()
+  - Critério: abs(eqm_anterior - eqm) < EPSILON
+  - Atualização: W += ETA * e * phi;  theta += ETA * e
+
+Dependências Python:
+  numpy, pandas, openpyxl, matplotlib
+  (sem scikit-learn, TensorFlow ou qualquer framework de ML)
+
+Como rodar:
+  cd "C:\Users\User\UEMG\Redes Neurais\trabalho5\pmc"
+  .\venv\Scripts\python.exe rbf.py
+
+  (ou: venv\Scripts\activate → python rbf.py)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. ESTRUTURA DO RELATÓRIO LATEX (relatorio/main.tex)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Classe: abntex2
+Compilador: pdflatex (MiKTeX no Windows)
+Extensão VS Code para visualizar: "LaTeX Workshop" (James-Yu.latex-workshop)
+
+Seções do relatório:
+  1. Código utilizado        ← rbf.py completo em lstlisting
+  2. K-Means (Tabela 1)      ← dois clusters, centros e variâncias
+  3. Regra Delta (Tabela 2)  ← W1, W2, θ, épocas e EQM para 5 treinamentos
+  4. Evolução do EQM         ← 5 figuras: ../graphics/Evolucao_do_erro/treinamento_rbf_N.png
+  5. Validação (Tabela 3)    ← 10 amostras com y e y^pos; taxa 80%
+  6. Matriz de confusão      ← 5 figuras: ../graphics/matrizes_de_confusao/rede_rbf_TN.png
+                                + tabela de métricas + nota sobre melhoria (aumentar K)
+
+Caminhos das imagens no main.tex:
+  Os caminhos são RELATIVOS à pasta relatorio/, usando ../graphics/...
+  Exemplo: \includegraphics[...]{../graphics/Evolucao_do_erro/treinamento_rbf_1.png}
+  NÃO há pasta relatorio/imagens/ — os PNGs estão direto em graphics/.
+
+Nota sobre o comando \eixo:
+  O main.tex define \newcommand{\eixo}{} logo após o \input{configs/forma}.
+  Isso é necessário porque forma.tex usa \eixo dentro do \@maketitle redefinido.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. PRÓXIMOS PASSOS — O QUE FALTA FAZER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ÚNICO passo pendente: compilar o relatório para PDF.
+
+Pré-requisito: ter MiKTeX instalado (miktex.org).
+  - Na primeira compilação, MiKTeX vai baixar pacotes automaticamente
+    (abntex2, listings, float, etc.). Aceite as instalações.
+
+Como compilar:
+  1. Abra o terminal dentro da pasta relatorio/:
+       cd "C:\Users\User\UEMG\Redes Neurais\trabalho5\pmc\relatorio"
+
+  2. Execute duas vezes (para resolver referências cruzadas):
+       pdflatex main.tex
+       pdflatex main.tex
+
+  3. O arquivo main.pdf será gerado na mesma pasta.
+
+Alternativa (VS Code):
+  - Instale a extensão "LaTeX Workshop" (James-Yu.latex-workshop)
+  - Abra main.tex e pressione Ctrl+Alt+B para compilar
+  - Ctrl+Alt+V abre o preview do PDF
+
+Se houver erro de compilação:
+  - Erro mais provável: pacote ausente (MiKTeX vai perguntar se quer instalar)
+  - Se o erro mencionar \eixo: verificar se a linha
+      \newcommand{\eixo}{}
+    está presente em main.tex (logo após os \input de configs/)
+  - Se houver erro com caractere θ no lstlisting: verificar se a linha
+      \lstset{literate={θ}{{\ensuremath{\theta}}}{1}}
+    está presente em main.tex (logo após o \newcommand{\eixo})
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. CONTEXTO DA DISCIPLINA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Disciplina: Optativa III — Redes Neurais Artificiais
+Curso:      Engenharia de Computação — 7º Período
+Instituição: UEMG (Universidade do Estado de Minas Gerais) — Divinópolis
+Professor:  Arismar
+
+Entrega: 24/06/2026 via Teams
+
+Trabalhos anteriores (mesma disciplina, mesma estrutura de relatório):
+  - Trabalho 1: Perceptron
+  - Trabalho 2: Adaline
+  - Trabalho 5 (este): RBF
+
+Remote git: https://github.com/Italovini223/pmc.git
+Branch: main
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. DADOS DE TREINAMENTO E VALIDAÇÃO (copiados do código para referência)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DADOS_TREINAMENTO (40 amostras, colunas: x1, x2, d):
+  [0.2563, 0.9503, -1], [0.2405, 0.9018, -1], [0.1157, 0.3676,  1],
+  [0.5147, 0.0167,  1], [0.4127, 0.3275,  1], [0.2809, 0.5830,  1],
+  [0.8263, 0.9301, -1], [0.9359, 0.8724, -1], [0.1096, 0.9165, -1],
+  [0.5158, 0.8545, -1], [0.1334, 0.1362,  1], [0.6371, 0.1439,  1],
+  [0.7052, 0.6277, -1], [0.8703, 0.8666, -1], [0.2612, 0.6109,  1],
+  [0.0244, 0.5279,  1], [0.9588, 0.3672, -1], [0.9332, 0.5499, -1],
+  [0.9623, 0.2961, -1], [0.7297, 0.5776, -1], [0.4560, 0.1871,  1],
+  [0.1715, 0.7713,  1], [0.5571, 0.5485, -1], [0.3344, 0.0259,  1],
+  [0.4803, 0.7635, -1], [0.9721, 0.4850, -1], [0.8318, 0.7844, -1],
+  [0.1373, 0.0292,  1], [0.3660, 0.8581, -1], [0.3626, 0.7302, -1],
+  [0.6474, 0.3324,  1], [0.3461, 0.2398,  1], [0.1353, 0.8120,  1],
+  [0.3463, 0.1017,  1], [0.9086, 0.1947, -1], [0.5227, 0.2321,  1],
+  [0.5153, 0.2041,  1], [0.1832, 0.0661,  1], [0.5015, 0.9812, -1],
+  [0.5024, 0.5274, -1]
+  Total d=+1: 19 amostras | d=-1: 21 amostras
+
+DADOS_VALIDACAO (10 amostras, colunas: x1, x2, d):
+  [0.8705, 0.9329, -1], [0.0388, 0.2703,  1], [0.8236, 0.4458, -1],
+  [0.7075, 0.1502,  1], [0.9587, 0.8663, -1], [0.6115, 0.9365, -1],
+  [0.3534, 0.3646,  1], [0.3268, 0.2766,  1], [0.6129, 0.4518, -1],
+  [0.9948, 0.4962, -1]
+  Total d=+1: 4 amostras | d=-1: 6 amostras
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+FIM DO ARQUIVO DE CONTEXTO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
