@@ -1,11 +1,14 @@
+# RBF — Rede de Função de Base Radial
+
+Projeto acadêmico: classificador binário RBF implementado do zero em Python. Treina 5 redes independentes e compara resultados. Sem frameworks de ML — apenas `numpy`, `pandas` e `math`.
+
 ## Requisitos
 
 ```
+numpy
 pandas
 openpyxl
 matplotlib
-numpy
-xlrd
 ```
 
 ## Como rodar
@@ -27,29 +30,23 @@ source venv/bin/activate
 ### 2. Instalar dependências
 
 ```
-pip install pandas openpyxl matplotlib numpy xlrd
+pip install numpy pandas openpyxl matplotlib
 ```
 
-### 3. Preparar planilhas (apenas na primeira vez)
-
-Coloque os arquivos `PP03_dados-treinamento.xls` e `PP03_dados-validacao.xls` na pasta Downloads e execute:
+### 3. Treinar e validar
 
 ```
-py preparar_planilhas.py
+py rbf.py
 ```
 
-### 4. Treinar as redes
-
-```
-py pmc.py
-```
+Os datasets são gerados automaticamente e sobrescritos a cada run.
 
 ## Arquivos gerados
 
-| Arquivo | Conteúdo |
+| Saída | Conteúdo |
 |---|---|
-| `datasets/resultados.xlsx` | Tabela 1 — EQM e épocas dos 5 treinamentos |
-| `datasets/validacao.xlsx` | Tabela 2 — saídas y(T1)…y(T5) para as 20 amostras de validação |
-| `datasets/metricas.xlsx` | Erro relativo médio (%) e Variância (%) por rede |
-| `graphics/Evolucao_do_erro/` | 5 gráficos de EQM por época |
-| `graphics/validacao/` | 5 gráficos de saída desejada vs. saída da rede |
+| `datasets/rbf_treinamento.xlsx` | 40 amostras de treinamento `(x1, x2, d)` |
+| `datasets/rbf_validacao.xlsx` | 10 amostras + previsões `y_T1..y_T5` e `ybin_T1..ybin_T5` |
+| `datasets/rbf_metricas.xlsx` | Acurácia, Sensibilidade, Especificidade, Precisão, VP/VN/FP/FN por rede |
+| `graphics/Evolucao_do_erro/treinamento_rbf_1..5.png` | Curva RMSE × época por rede |
+| `graphics/matrizes_de_confusao/rede_rbf_T1..T5.png` | Matriz de confusão por rede |
