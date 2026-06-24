@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.10)  23 JUN 2026 23:35
+This is pdfTeX, Version 3.141592653-2.6-1.40.28 (MiKTeX 25.12) (preloaded format=pdflatex 2026.6.10)  23 JUN 2026 23:42
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1249,86 +1249,86 @@ Package microtype Info: Loading generic protrusion settings for font family
 
 ]
 [3] [4] [5] [6] [7] [8] [9] [10] [11] [12]
-<../graphics/Evolucao_do_erro/treinamento_rbf_1.png, id=444, 722.7pt x 361.35pt
+<../graphics/Evolucao_do_erro/treinamento_rbf_1.png, id=443, 722.7pt x 361.35pt
 >
 File: ../graphics/Evolucao_do_erro/treinamento_rbf_1.png Graphic file (type png
 )
 <use ../graphics/Evolucao_do_erro/treinamento_rbf_1.png>
 Package pdftex.def Info: ../graphics/Evolucao_do_erro/treinamento_rbf_1.png  us
-ed on input line 481.
+ed on input line 480.
 (pdftex.def)             Requested size: 559.64806pt x 279.8228pt.
-<../graphics/Evolucao_do_erro/treinamento_rbf_2.png, id=446, 722.7pt x 361.35pt
+<../graphics/Evolucao_do_erro/treinamento_rbf_2.png, id=445, 722.7pt x 361.35pt
 >
 File: ../graphics/Evolucao_do_erro/treinamento_rbf_2.png Graphic file (type png
 )
 <use ../graphics/Evolucao_do_erro/treinamento_rbf_2.png>
 Package pdftex.def Info: ../graphics/Evolucao_do_erro/treinamento_rbf_2.png  us
-ed on input line 490.
+ed on input line 489.
 (pdftex.def)             Requested size: 559.64806pt x 279.8228pt.
  [13 <../graphics/Evolucao_do_erro/treinamento_rbf_1.png>]
-<../graphics/Evolucao_do_erro/treinamento_rbf_3.png, id=456, 722.7pt x 361.35pt
+<../graphics/Evolucao_do_erro/treinamento_rbf_3.png, id=455, 722.7pt x 361.35pt
 >
 File: ../graphics/Evolucao_do_erro/treinamento_rbf_3.png Graphic file (type png
 )
 <use ../graphics/Evolucao_do_erro/treinamento_rbf_3.png>
 Package pdftex.def Info: ../graphics/Evolucao_do_erro/treinamento_rbf_3.png  us
-ed on input line 499.
+ed on input line 498.
 (pdftex.def)             Requested size: 559.64806pt x 279.8228pt.
-<../graphics/Evolucao_do_erro/treinamento_rbf_4.png, id=457, 722.7pt x 361.35pt
+<../graphics/Evolucao_do_erro/treinamento_rbf_4.png, id=456, 722.7pt x 361.35pt
 >
 File: ../graphics/Evolucao_do_erro/treinamento_rbf_4.png Graphic file (type png
 )
 <use ../graphics/Evolucao_do_erro/treinamento_rbf_4.png>
 Package pdftex.def Info: ../graphics/Evolucao_do_erro/treinamento_rbf_4.png  us
-ed on input line 508.
+ed on input line 507.
 (pdftex.def)             Requested size: 559.64806pt x 279.8228pt.
  [14 <../graphics/Evolucao_do_erro/treinamento_rbf_2.png> <../graphics/Evolucao
 _do_erro/treinamento_rbf_3.png>]
-<../graphics/Evolucao_do_erro/treinamento_rbf_5.png, id=466, 722.7pt x 361.35pt
+<../graphics/Evolucao_do_erro/treinamento_rbf_5.png, id=465, 722.7pt x 361.35pt
 >
 File: ../graphics/Evolucao_do_erro/treinamento_rbf_5.png Graphic file (type png
 )
 <use ../graphics/Evolucao_do_erro/treinamento_rbf_5.png>
 Package pdftex.def Info: ../graphics/Evolucao_do_erro/treinamento_rbf_5.png  us
-ed on input line 517.
+ed on input line 516.
 (pdftex.def)             Requested size: 559.64806pt x 279.8228pt.
  [15 <../graphics/Evolucao_do_erro/treinamento_rbf_4.png> <../graphics/Evolucao
 _do_erro/treinamento_rbf_5.png>]
-<../graphics/matrizes_de_confusao/rede_rbf_T1.png, id=480, 361.35pt x 289.08pt>
+<../graphics/matrizes_de_confusao/rede_rbf_T1.png, id=479, 361.35pt x 289.08pt>
 
 File: ../graphics/matrizes_de_confusao/rede_rbf_T1.png Graphic file (type png)
 <use ../graphics/matrizes_de_confusao/rede_rbf_T1.png>
 Package pdftex.def Info: ../graphics/matrizes_de_confusao/rede_rbf_T1.png  used
- on input line 570.
+ on input line 569.
 (pdftex.def)             Requested size: 250.25139pt x 200.20204pt.
-<../graphics/matrizes_de_confusao/rede_rbf_T2.png, id=481, 361.35pt x 289.08pt>
+<../graphics/matrizes_de_confusao/rede_rbf_T2.png, id=480, 361.35pt x 289.08pt>
 
 File: ../graphics/matrizes_de_confusao/rede_rbf_T2.png Graphic file (type png)
 <use ../graphics/matrizes_de_confusao/rede_rbf_T2.png>
 Package pdftex.def Info: ../graphics/matrizes_de_confusao/rede_rbf_T2.png  used
- on input line 577.
+ on input line 576.
 (pdftex.def)             Requested size: 250.25139pt x 200.20204pt.
  [16 <../graphics/matrizes_de_confusao/rede_rbf_T1.png>]
-<../graphics/matrizes_de_confusao/rede_rbf_T3.png, id=491, 361.35pt x 289.08pt>
+<../graphics/matrizes_de_confusao/rede_rbf_T3.png, id=490, 361.35pt x 289.08pt>
 
 File: ../graphics/matrizes_de_confusao/rede_rbf_T3.png Graphic file (type png)
 <use ../graphics/matrizes_de_confusao/rede_rbf_T3.png>
 Package pdftex.def Info: ../graphics/matrizes_de_confusao/rede_rbf_T3.png  used
- on input line 584.
+ on input line 583.
 (pdftex.def)             Requested size: 250.25139pt x 200.20204pt.
-<../graphics/matrizes_de_confusao/rede_rbf_T4.png, id=492, 361.35pt x 289.08pt>
+<../graphics/matrizes_de_confusao/rede_rbf_T4.png, id=491, 361.35pt x 289.08pt>
 
 File: ../graphics/matrizes_de_confusao/rede_rbf_T4.png Graphic file (type png)
 <use ../graphics/matrizes_de_confusao/rede_rbf_T4.png>
 Package pdftex.def Info: ../graphics/matrizes_de_confusao/rede_rbf_T4.png  used
- on input line 591.
+ on input line 590.
 (pdftex.def)             Requested size: 250.25139pt x 200.20204pt.
-<../graphics/matrizes_de_confusao/rede_rbf_T5.png, id=493, 361.35pt x 289.08pt>
+<../graphics/matrizes_de_confusao/rede_rbf_T5.png, id=492, 361.35pt x 289.08pt>
 
 File: ../graphics/matrizes_de_confusao/rede_rbf_T5.png Graphic file (type png)
 <use ../graphics/matrizes_de_confusao/rede_rbf_T5.png>
 Package pdftex.def Info: ../graphics/matrizes_de_confusao/rede_rbf_T5.png  used
- on input line 598.
+ on input line 597.
 (pdftex.def)             Requested size: 250.25139pt x 200.20204pt.
  [17 <../graphics/matrizes_de_confusao/rede_rbf_T2.png> <../graphics/matrizes_d
 e_confusao/rede_rbf_T3.png> <../graphics/matrizes_de_confusao/rede_rbf_T4.png>]
@@ -1339,10 +1339,10 @@ L3 programming layer <2020/03/25>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 23887 strings out of 467871
- 387768 string characters out of 5419344
+ 23883 strings out of 467871
+ 387716 string characters out of 5419344
  1711175 words of memory out of 5000000
- 51843 multiletter control sequences out of 15000+600000
+ 51840 multiletter control sequences out of 15000+600000
  691230 words of font info for 217 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,13n,107p,1033b,2237s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1358,9 +1358,9 @@ e1/urw/symbol/usyr.pfb><C:/Users/yan/AppData/Local/Programs/MiKTeX/fonts/type1/
 urw/times/utmb8a.pfb><C:/Users/yan/AppData/Local/Programs/MiKTeX/fonts/type1/ur
 w/times/utmr8a.pfb><C:/Users/yan/AppData/Local/Programs/MiKTeX/fonts/type1/urw/
 times/utmri8a.pfb>
-Output written on main.pdf (18 pages, 573178 bytes).
+Output written on main.pdf (18 pages, 573062 bytes).
 PDF statistics:
- 641 PDF objects out of 1000 (max. 8388607)
- 410 named destinations out of 1000 (max. 500000)
+ 640 PDF objects out of 1000 (max. 8388607)
+ 409 named destinations out of 1000 (max. 500000)
  72755 words of extra memory for PDF output out of 74296 (max. 10000000)
 
