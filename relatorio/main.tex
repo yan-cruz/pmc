@@ -169,9 +169,8 @@ def pos_processar(y):
 
 
 def kmeans(X_pos, k=K, max_iter=1000):
-    n        = len(X_pos)
-    idx_init = np.random.choice(n, k, replace=False)
-    centros  = X_pos[idx_init].copy().astype(float)
+    n       = len(X_pos)
+    centros = X_pos[:k].copy().astype(float)
     for _ in range(max_iter):
         dists   = np.array([[np.sum((x - c) ** 2) for c in centros]
                              for x in X_pos])
