@@ -191,7 +191,7 @@ Sem frameworks de ML (scikit-learn, TensorFlow, PyTorch). Rede implementada do z
 
 - **`preparar_datasets()` sempre executa** — sobrescreve os .xlsx a cada run; dados canônicos vivem no script
 - **5 redes sempre** — `N_REDES = 5`, hardcoded; sem argumento CLI
-- **K-Means independente por rede** — sem semente global; variância entre runs é esperada e intencional
+- **K-Means determinístico** — inicialização com as primeiras K amostras positivas (`X_pos[:K]`), conforme pseudocódigo do professor (passo `<2>`). Mesmos clusters garantidos em todos os treinamentos
 - **Cluster unitário** — variância mínima `1e-6` para evitar divisão por zero na gaussiana
 - **Consolidação no final** — `salvar_validacao` e `salvar_metricas` escrevem uma vez com dados de todas as redes
 - **Arquivos RBF isolados** — usa `rbf_*.xlsx` para não sobrescrever os datasets do PMC

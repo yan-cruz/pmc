@@ -187,9 +187,8 @@ def pos_processar(y):
 
 def kmeans(X_pos, k=K, max_iter=1000):
     """K-Means sobre amostras positivas; retorna (centros, rotulos)."""
-    n        = len(X_pos)
-    idx_init = np.random.choice(n, k, replace=False)
-    centros  = X_pos[idx_init].copy().astype(float)
+    n       = len(X_pos)
+    centros = X_pos[:k].copy().astype(float)  # primeiras k amostras (pseudocódigo passo <2>)
 
     for _ in range(max_iter):
         dists   = np.array([[np.sum((x - c) ** 2) for c in centros] for x in X_pos])
@@ -209,14 +208,15 @@ def kmeans(X_pos, k=K, max_iter=1000):
 
 def calcular_variancias(X_pos, centros, rotulos, k=K):
     """
-    Variância de cada cluster pelo critério da distância quadrática média:
-    σ²_j = (1/m^(j)) * Σ_{x^(k)∈Ω^(j)} Σ_i (x_i^(k) - W_ji^(1))²
+    Variância de cada cluster:
+    σ²_j = (2 / m^(j)) * Σ_{x^(k)∈Ω^(j)} ||x^(k) - W_j^(1)||²
+    O fator 2 alarga o campo receptivo das gaussianas (Silva et al.).
     """
     variancias = []
     for i in range(k):
         membros = X_pos[rotulos == i]
         if len(membros) > 1:
-            var = float(np.mean(np.sum((membros - centros[i]) ** 2, axis=1)))
+            var = float(2.0 * np.mean(np.sum((membros - centros[i]) ** 2, axis=1)))
         else:
             var = 1e-6
         variancias.append(max(var, 1e-12))
@@ -246,7 +246,7 @@ def treinar_saida(X_treino, D_treino, centros, variancias):
             W     += ETA * e * phi
             theta += ETA * e
 
-        eqm = float(np.mean(erros_quad))
+        eqm = float(0.5 * np.mean(erros_quad))  # fórmula 5.8 do livro Silva et al.: E_M = (1/p)Σ(½e²)
         eqm_por_epoca.append(eqm)
 
         if abs(eqm_anterior - eqm) < EPSILON:

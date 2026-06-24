@@ -25,8 +25,17 @@ O que foi feito nesta sessão de trabalho:
         de cada rede em rbf_treinamentos.xlsx (cobre Tabelas 1 e 2 do roteiro).
       - Corrigido UnicodeEncodeError no Windows (cp1252): o caractere θ foi
         removido de f-strings de print (mantido apenas no Excel via openpyxl).
-      - Resultado ao rodar: 5 redes convergem em ~346-347 épocas, EQM ≈ 0,237,
-        acurácia 80% em todas (8/10 corretos).
+      - Corrigida inicialização do K-Means: o pseudocódigo (slide 9, passo <2>)
+        diz "iniciar com os valores das n_1 primeiras amostras de treinamento".
+        O código original usava np.random.choice (aleatório). Corrigido para
+        usar X_pos[:K] (primeiras K amostras positivas). K-Means agora é
+        determinístico — mesmos clusters garantidos em todos os treinamentos.
+      - Corrigida fórmula de variância: fator 2 adicionado (σ²_j = (2/m) × Σ||x-c||²),
+        ampliando o campo receptivo das gaussianas (conforme Silva et al.).
+      - Corrigida fórmula de EQM: fator ½ adicionado (EQM = (1/N)×Σ(½e²)),
+        conforme fórmula 5.8 do livro Silva et al.
+      - Resultado ao rodar: 5 redes convergem em 238-239 épocas, EQM ≈ 0,1220,
+        acurácia 90% em todas (9/10 corretos). Erro único: amostra 9 (FP).
 
   [✓] relatorio/main.tex criado do zero:
       - Segue exatamente o modelo do relatório PMC anterior (abntex2).
@@ -122,49 +131,51 @@ Item 6 — Relatório
 Os resultados são ESTÁVEIS — todas as 5 redes convergem para a mesma solução.
 
 TABELA 1 — K-Means (mesma para todos os treinamentos):
-  Cluster 1: Centro x1=0,39896923  x2=0,15713077  σ²=0,03845986  (n=13)
-  Cluster 2: Centro x1=0,16483333  x2=0,61211667  σ²=0,02980551  (n=6)
+  Cluster 1: Centro x1=0,1648  x2=0,6121  σ²=0,0596  (n=6)
+  Cluster 2: Centro x1=0,3990  x2=0,1571  σ²=0,0769  (n=13)
 
-  Nota: K-Means usa SOMENTE amostras com d=+1 (19 de 40 amostras de treinamento).
+  Fórmula de variância: σ²_j = (2/m^(j)) × Σ_{x∈Ω^(j)} ||x − W_j||²
+  (fator 2 amplia o campo receptivo — Silva et al.)
+  K-Means usa SOMENTE amostras com d=+1 (19 de 40 amostras de treinamento).
 
-TABELA 2 — Regra Delta (os W1 e W2 podem estar trocados entre runs —
-dependendo de qual cluster ficou como índice 0 ou 1 — mas o resultado
-classificatório é idêntico):
-  T1: W1=+2,69754641  W2=+2,37765557  θ=−1,00253395  épocas=347  EQM=0,237
-  T2: W1=+2,37756234  W2=+2,69750750  θ=−1,00253594  épocas=347  EQM=0,237
-  T3: W1=+2,69754621  W2=+2,37765522  θ=−1,00255862  épocas=347  EQM=0,237
-  T4: W1=+2,37764719  W2=+2,69754284  θ=−1,00255666  épocas=346  EQM=0,237
-  T5: W1=+2,69754138  W2=+2,37764357  θ=−1,00255578  épocas=346  EQM=0,237
+TABELA 2 — Regra Delta (idêntica nos 5 treinamentos):
+  T1: W1=+1,5979  W2=+2,5040  θ=−1,2955  épocas=238  EQM=0,1220
+  T2: W1=+1,5979  W2=+2,5040  θ=−1,2955  épocas=238  EQM=0,1220
+  T3: W1=+1,5979  W2=+2,5040  θ=−1,2955  épocas=238  EQM=0,1220
+  T4: W1=+1,5979  W2=+2,5040  θ=−1,2955  épocas=239  EQM=0,1220
+  T5: W1=+1,5979  W2=+2,5040  θ=−1,2955  épocas=239  EQM=0,1220
+
+  EQM = (1/N) × Σ(½e²)  — fórmula 5.8 de Silva et al.
 
 TABELA 3 — Validação (idêntica em todos os treinamentos, valores de T1):
   Amostra | x1      | x2      | d  | y           | y^pos | OK?
-  1       | 0,8705  | 0,9329  | -1 | -1,002374   | -1    | OK
-  2       | 0,0388  | 0,2703  | +1 | -0,323085   | -1    | XX  ← FN
-  3       | 0,8236  | 0,4458  | -1 | -0,913920   | -1    | OK
-  4       | 0,7075  | 0,1502  | +1 | -0,220010   | -1    | XX  ← FN
-  5       | 0,9587  | 0,8663  | -1 | -1,002447   | -1    | OK
-  6       | 0,6115  | 0,9365  | -1 | -0,987655   | -1    | OK
-  7       | 0,3534  | 0,3646  | +1 |  0,966410   | +1    | OK
-  8       | 0,3268  | 0,2766  | +1 |  1,323102   | +1    | OK
-  9       | 0,6129  | 0,4518  | -1 | -0,468109   | -1    | OK
-  10      | 0,9948  | 0,4962  | -1 | -0,996526   | -1    | OK
-  Taxa de acertos: 8/10 = 80%
+  1       | 0,8705  | 0,9329  | -1 | −1,0038     | -1    | OK
+  2       | 0,0388  | 0,2703  | +1 | +0,8426     | +1    | OK
+  3       | 0,8236  | 0,4458  | -1 | −0,6830     | -1    | OK
+  4       | 0,7075  | 0,1502  | +1 | +0,5437     | +1    | OK
+  5       | 0,9587  | 0,8663  | -1 | −1,0040     | -1    | OK
+  6       | 0,6115  | 0,9365  | -1 | −0,9905     | -1    | OK
+  7       | 0,3534  | 0,3646  | +1 | +1,8372     | +1    | OK
+  8       | 0,3268  | 0,2766  | +1 | +2,1514     | +1    | OK
+  9       | 0,6129  | 0,4518  | -1 | +0,0012     | +1    | XX  ← FP
+  10      | 0,9948  | 0,4962  | -1 | −0,9016     | -1    | OK
+  Taxa de acertos: 9/10 = 90%
 
 MATRIZ DE CONFUSÃO (idêntica nos 5 treinamentos):
                  Previsto +1   Previsto -1
-  Real +1   |  VP = 2     |  FN = 2     |
-  Real -1   |  FP = 0     |  VN = 6     |
+  Real +1   |  VP = 4     |  FN = 0     |
+  Real -1   |  FP = 1     |  VN = 5     |
 
-  Nacertos       = 8
-  Nerros         = 2
-  Acurácia       = 80,00%
-  Sensibilidade  = 50,00%   (VP / (VP+FN) = 2/4)
-  Especificidade = 100,00%  (VN / (VN+FP) = 6/6)
-  Precisão       = 100,00%  (VP / (VP+FP) = 2/2)
+  Nacertos       = 9
+  Nerros         = 1
+  Acurácia       = 90,00%
+  Sensibilidade  = 100,00%  (VP / (VP+FN) = 4/4)
+  Especificidade = 83,33%   (VN / (VN+FP) = 5/6)
+  Precisão       = 80,00%   (VP / (VP+FP) = 4/5)
 
-Os 2 erros são Falsos Negativos: amostras 2 e 4 (d=+1) classificadas como -1.
-Motivo: ambas ficam em regiões com baixa ativação gaussiana em relação aos dois
-clusters encontrados. Estratégia de melhoria: aumentar K (mais neurônios RBF).
+O único erro é um Falso Positivo: amostra 9 (x1=0,6129, x2=0,4518, d=-1)
+classificada como +1 com y≈+0,0012. Situa-se na fronteira de decisão.
+Estratégia de melhoria: aumentar K (mais neurônios RBF) ou ampliar dataset.
 
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -188,13 +199,14 @@ Arquitetura:
 
 Estágio 1 — K-Means:
   - Aplicado SOMENTE às amostras com d=+1 (X_pos = X_treino[D_treino == 1])
-  - Variância por cluster:
-    σ²_j = (1/m^(j)) × Σ_{x^(k)∈Ω^(j)} Σ_i (x_i^(k) - W_ji^(1))²
-    Fórmula exata dos slides do professor (6_RBF.pdf, slide do pseudocódigo)
+  - Variância por cluster (COM fator 2 — campo receptivo mais largo):
+    σ²_j = (2/m^(j)) × Σ_{x^(k)∈Ω^(j)} ||x^(k) - W_j^(1)||²
+    Conforme Silva et al. e código de referência do colega
+  - Inicialização determinística: primeiras K amostras positivas (X_pos[:K])
 
 Estágio 2 — Regra Delta:
-  - Convergência por EQM (não RMSE):
-    eqm = np.mean(erros_quad)   ← SEM math.sqrt()
+  - Convergência por EQM (fórmula 5.8 Silva et al., com fator ½):
+    eqm = 0.5 * np.mean(erros_quad)
   - Critério: abs(eqm_anterior - eqm) < EPSILON
   - Atualização: W += ETA * e * phi;  theta += ETA * e
 
@@ -222,9 +234,10 @@ Seções do relatório:
   2. K-Means (Tabela 1)      ← dois clusters, centros e variâncias
   3. Regra Delta (Tabela 2)  ← W1, W2, θ, épocas e EQM para 5 treinamentos
   4. Evolução do EQM         ← 5 figuras: ../graphics/Evolucao_do_erro/treinamento_rbf_N.png
-  5. Validação (Tabela 3)    ← 10 amostras com y e y^pos; taxa 80%
+  5. Validação (Tabela 3)    ← 10 amostras com y e y^pos; taxa 90%
   6. Matriz de confusão      ← 5 figuras: ../graphics/matrizes_de_confusao/rede_rbf_TN.png
                                 + tabela de métricas + nota sobre melhoria (aumentar K)
+                                + único erro: amostra 9 (FP)
 
 Caminhos das imagens no main.tex:
   Os caminhos são RELATIVOS à pasta relatorio/, usando ../graphics/...
